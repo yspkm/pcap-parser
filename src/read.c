@@ -12,19 +12,19 @@ FILE* fopen_at_path(char* pathname, char* filename, char* modes)
 	return ret;
 }
 
-void get_ether_info(ether_header_t* ret, FILE* pcap)
+size_t get_ether_info(ether_header_t* ret, FILE* pcap)
 {
 	fread(ret, sizeof(ether_header_t), 1, pcap);
+	return sizeof(ether_header_t);
 }
 
-void get_ip_info(ip_header_t* ret, FILE* pcap)
+size_t get_ip_info(ip_header_t* ret, FILE* pcap)
 {
 	fread(ret, sizeof(ip_header_t), 1, pcap);
+	return sizeof(ip_header_t);
 }
 
 void get_packet_header (packet_header_t* ret, FILE* pcap)
 {
-	// packet header
 	fread(ret, sizeof(packet_header_t), 1, pcap);
-	printf("%u, %u, %u, %u\n", ret->sec, ret->usec, ret->caplen, ret->len);
 }

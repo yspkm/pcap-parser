@@ -29,10 +29,7 @@ typedef struct _ip_header_s {
 
 	// 32 bit
 	word_t id:16;
-	word_t dummy:1;
-	word_t df:1;
-	word_t mf:1;
-	word_t offset:16-3;
+	word_t frag_info:16; 
 
 	word_t ttl:8;
 	word_t protocol:8;
