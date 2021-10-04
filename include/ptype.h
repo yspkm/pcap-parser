@@ -1,8 +1,10 @@
+#ifndef PTYPE_H 
+#define PTYPE_H
+
 #include <bits/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 typedef	int int32_t;
 typedef	unsigned u_int32_t;
@@ -54,3 +56,5 @@ typedef struct _packet_info_s
 	ether_header_t ether_header;
 	ip_header_t ip_header;
 } packet_info_t;
+
+#endif
