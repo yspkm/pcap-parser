@@ -53,3 +53,6 @@ dkms.conf
 
 # test code, exe, ans.txt 
 *test*
+./output/ans.txt
+./bin/packet-parser
+*.o
