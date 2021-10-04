@@ -1,7 +1,7 @@
 #!/bin/sh 
 
 cd ./bin
-rm packet_parser
+rm packet-parser
 
 cd ../output
 rm ans.txt
