@@ -1,11 +1,7 @@
-
 // Computer Network Hw2
-// 2017312605 Yosep Kim
-// for convinience, Makefile and *.sh are available. 
-// --> https://github.com/yspkm/pcap-parser
+// 2017312605 김요셉 ( https://github.com/yspkm/pcap-parser )
 
-// file name for testing 
-#define FILE_NAME "fname.pcap"
+#define FILE_NAME "fname.pcap" // 파일 이름 설정용 .  
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -131,16 +127,19 @@ int main(int argc, char *argv[])
 	cnt_tcp = 0;
 	cnt_udp = 0;
 	cnt_icmp = 0;
-
+	
+	hword_t old_id = 0xffff;  
 	fread(padding, sizeof(byte_t), FILE_HEADER_LEN, file);
-	while (!feof(file))
+	for (frame_num = 1; !feof(file) ; frame_num++)
 	{
 		get_packet_header(&pcap.packet_header, file);
 		get_ether_info(&pcap.ether_header, file);
 		get_ip_info(&pcap.ip_header, file);
 		fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
+		// wsl의 파일형식 문제로 추가한 구문입니다. 
+		if (feof(file)) {break;}
+		print_packet_info(&pcap, frame_num);
 
-		frame_num++; // 1, 2, 3.. as in Wireshark
 		if (get_ip_flag(&pcap.ip_header) != DF)
 		{
 			cnt_frag++;
@@ -157,9 +156,8 @@ int main(int argc, char *argv[])
 			cnt_udp++;
 			break;
 		}
-
-		print_packet_info(&pcap, frame_num);
 	}
+	frame_num--;
 	printf("%d Packets(%d TCP | %d UDP | %d ICMP | %d Fragmented)\n",
 		   frame_num, cnt_tcp, cnt_udp, cnt_icmp, cnt_frag);
 
