@@ -3,8 +3,11 @@
 cd ./bin
 rm packet-parser
 
+cd ../src
+make clean
+
 cd ../output
-rm ans.txt
+rm *.txt
 
 cd ../
 
