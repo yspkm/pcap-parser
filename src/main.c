@@ -29,15 +29,17 @@ int main(int argc, char *argv[])
 	cnt_icmp = 0;
 
 	fread(padding, sizeof(byte_t), 24, file);
+	get_packet_header(&pcap.packet_header, file);
+	get_ether_info(&pcap.ether_header, file);
+	get_ip_info(&pcap.ip_header, file);
+	fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
+
 	while (!feof(file))
 	{
-		get_packet_header(&pcap.packet_header, file);
-		get_ether_info(&pcap.ether_header, file);
-		get_ip_info(&pcap.ip_header, file);
-		fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
-
 		frame_num++; // 1, 2, 3.. as in Wireshark
-		if (get_ip_flag(&pcap.ip_header) != DF)
+		print_packet_info(&pcap, frame_num);
+
+		if (get_ip_flag(&pcap.ip_header) != DF && get_offset(&pcap.ip_header))
 		{
 			cnt_frag++;
 		}
@@ -54,7 +56,10 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		print_packet_info(&pcap, frame_num);
+		get_packet_header(&pcap.packet_header, file);
+		get_ether_info(&pcap.ether_header, file);
+		get_ip_info(&pcap.ip_header, file);
+		fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
 	}
 	printf("%d Packets(%d TCP | %d UDP | %d ICMP | %d Fragmented)\n",
 		   frame_num, cnt_tcp, cnt_udp, cnt_icmp, cnt_frag);

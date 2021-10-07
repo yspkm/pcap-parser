@@ -87,7 +87,7 @@ void print_local_time(packet_header_t *pkthdr)
 	time_t sec = (time_t)pkthdr->sec;
 	struct tm *time = localtime(&sec);
 	u_int32_t usec = pkthdr->usec;
-	printf("%2d:%2d:%2d.%.06u", time->tm_hour, time->tm_min, time->tm_sec, usec);
+	printf("%.02d:%.02d:%.02d.%.06u", time->tm_hour, time->tm_min, time->tm_sec, usec);
 }
 
 u_int32_t hword_to_numeric(hword_t hword)
@@ -206,12 +206,18 @@ void print_packet_info(packet_info_t *pcap, int frame_cnt)
 	printf("\n");
 
 	flag = get_ip_flag(&pcap->ip_header);
-	printf("Flag                | %s", flag == MF ? "MF" : (flag == DF) ? "DF"
-																		: "last frag");
-	if (flag != DF)
+	printf("Flag                | %s ", flag == MF ? "MF" : (flag == DF) ? "DF":"  ");
+	if (flag != DF && pcap->ip_header.frag_info)
 	{
 		offset = get_offset(&pcap->ip_header);
-		printf(" (offset: %d (%d * 8))\n", offset * 8, offset);
+		if (offset)
+		{
+			printf("| offset: %d (%d)\n", offset, offset * 8);
+		} 
+		else
+		{
+			printf("| offset: 0\n");
+		}
 	}
 	else
 	{

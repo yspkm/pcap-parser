@@ -1,7 +1,7 @@
 // Computer Network Hw2
 // 2017312605 김요셉 ( https://github.com/yspkm/pcap-parser )
 
-#define FILE_NAME "fname.pcap" // 파일 이름 설정용 .  
+#define FILE_NAME "fname.pcap" // 파일 이름 설정용 .
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,37 +110,24 @@ int main(int argc, char *argv[])
 	word_t padding[4096] = {0};
 	FILE *file = fopen(fname, "rb");
 
-	// if (argc != 2)
-	// {
-	// 	printf("useage: ./packet-parser {file name}");
-	// 	exit(1);
-	// }
-	// FILE *file = fopen_at_path("../input/", argv[1], "rb");
-	// if (!file)
-	// {
-	// 	printf("no file\n");
-	// 	exit(1);
-	// }
-
 	frame_num = 0;
 	cnt_frag = 0;
 	cnt_tcp = 0;
 	cnt_udp = 0;
 	cnt_icmp = 0;
-	
-	hword_t old_id = 0xffff;  
-	fread(padding, sizeof(byte_t), FILE_HEADER_LEN, file);
-	for (frame_num = 1; !feof(file) ; frame_num++)
+
+	fread(padding, sizeof(byte_t), 24, file);
+	get_packet_header(&pcap.packet_header, file);
+	get_ether_info(&pcap.ether_header, file);
+	get_ip_info(&pcap.ip_header, file);
+	fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
+
+	while (!feof(file))
 	{
-		get_packet_header(&pcap.packet_header, file);
-		get_ether_info(&pcap.ether_header, file);
-		get_ip_info(&pcap.ip_header, file);
-		fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
-		// wsl의 파일형식 문제로 추가한 구문입니다. 
-		if (feof(file)) {break;}
+		frame_num++; // 1, 2, 3.. as in Wireshark
 		print_packet_info(&pcap, frame_num);
 
-		if (get_ip_flag(&pcap.ip_header) != DF)
+		if (get_ip_flag(&pcap.ip_header) != DF && get_offset(&pcap.ip_header))
 		{
 			cnt_frag++;
 		}
@@ -156,12 +143,14 @@ int main(int argc, char *argv[])
 			cnt_udp++;
 			break;
 		}
+
+		get_packet_header(&pcap.packet_header, file);
+		get_ether_info(&pcap.ether_header, file);
+		get_ip_info(&pcap.ip_header, file);
+		fread(padding, sizeof(byte_t), pcap.packet_header.caplen - READ_BYTES, file);
 	}
-	frame_num--;
 	printf("%d Packets(%d TCP | %d UDP | %d ICMP | %d Fragmented)\n",
 		   frame_num, cnt_tcp, cnt_udp, cnt_icmp, cnt_frag);
-
-	return 0;
 }
 
 void print_bytes_file(FILE *file, int len)
@@ -251,7 +240,7 @@ void print_local_time(packet_header_t *pkthdr)
 	time_t sec = (time_t)pkthdr->sec;
 	struct tm *time = localtime(&sec);
 	u_int32_t usec = pkthdr->usec;
-	printf("%2d:%2d:%2d.%.06u", time->tm_hour, time->tm_min, time->tm_sec, usec);
+	printf("%.02d:%.02d:%.02d.%.06u", time->tm_hour, time->tm_min, time->tm_sec, usec);
 }
 
 u_int32_t hword_to_numeric(hword_t hword)
@@ -370,12 +359,18 @@ void print_packet_info(packet_info_t *pcap, int frame_cnt)
 	printf("\n");
 
 	flag = get_ip_flag(&pcap->ip_header);
-	printf("Flag                | %s", flag == MF ? "MF" : (flag == DF) ? "DF"
-																		: "last frag");
-	if (flag != DF)
+	printf("Flag                | %s ", flag == MF ? "MF" : (flag == DF) ? "DF":"  ");
+	if (flag != DF && pcap->ip_header.frag_info)
 	{
 		offset = get_offset(&pcap->ip_header);
-		printf(" (offset: %d (%d * 8))\n", offset * 8, offset);
+		if (offset)
+		{
+			printf("| offset: %d (%d)\n", offset, offset * 8);
+		} 
+		else
+		{
+			printf("| offset: 0\n");
+		}
 	}
 	else
 	{
